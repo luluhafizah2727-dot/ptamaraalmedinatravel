@@ -16,14 +16,15 @@ Minimal dan rekomendasi lingkungan untuk menjalankan proyek ini:
 
 - **PHP**: ^8.3 (sesuaikan dengan `composer.json`).
 - **Composer**: versi 2.x.
-- **Node.js**: direkomendasikan Node 18+ (untuk Vite dan build frontend).
-- **npm / pnpm / yarn**: gunakan versi yang sesuai dengan Node (npm 9+ direkomendasikan).
+- **Node.js**: Node 22+ untuk build frontend dari source.
+- **npm / pnpm / yarn**: gunakan versi yang sesuai dengan Node.
 - **Database**: MySQL atau MariaDB (MySQL 5.7+/8.x atau MariaDB setara).
 
 PHP extensions yang umumnya diperlukan:
 
 - `ctype`
 - `fileinfo`
+- `intl`
 - `json`
 - `mbstring`
 - `openssl`
@@ -70,29 +71,30 @@ Untuk akses melalui browser, tambahkan entri pada file `hosts` jika Anda memakai
 ## Struktur Asset
 
 - `public/images/site/` berisi asset aktif: `logo.png` dan `beranda-img.jpg`.
--- `public/images/seed/` berisi gambar fallback dan referensi seed.
--- Upload dari admin disimpan di disk `public` Laravel dan diakses melalui symlink `public/storage`.
+- `public/images/seed/` berisi gambar fallback dan referensi seed.
+- Upload dari admin disimpan di disk `public` Laravel dan diakses melalui symlink `public/storage`.
 
 ## Setup
 
 ```bash
 composer install
-npm install
-cp .env.example .env
-/usr/bin/php8.3 artisan key:generate
-/usr/bin/php8.3 artisan migrate --seed
-/usr/bin/php8.3 artisan storage:link
+npm ci
 npm run build
-/usr/bin/php8.3 artisan optimize
-/usr/bin/php8.3 artisan filament:optimize
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+php artisan optimize:clear
 ```
 
 Seeder admin awal membaca environment berikut bila tersedia:
 
 ```env
-ADMIN_INITIAL_EMAIL=
-ADMIN_INITIAL_PASSWORD=
+ADMIN_INITIAL_EMAIL=admin@example.com
+ADMIN_INITIAL_PASSWORD=ganti-password-ini
 ```
+
+Jika `ADMIN_INITIAL_EMAIL` atau `ADMIN_INITIAL_PASSWORD` kosong, seeder tidak membuat akun admin awal.
 
 Disk upload publik memakai URL relatif `/storage` secara default. Jika perlu override, gunakan `FILESYSTEM_PUBLIC_URL`.
 
@@ -126,18 +128,20 @@ Jalankan test dan build seperti biasa untuk proyek Laravel + frontend:
 ```bash
 php artisan test
 npm run build
-php artisan optimize
-php artisan filament:optimize
+php artisan optimize:clear
 ```
 
 Untuk smoke-check lokal, panggil endpoint publik yang relevan menggunakan host atau alamat yang sesuai dengan konfigurasi lokal Anda.
 
 ## Release ZIP untuk XAMPP
 
-Jika menggunakan release prebuild dari GitHub, file yang diunduh biasanya berupa ZIP berisi aplikasi siap pakai dengan:
+Jika menggunakan release prebuild dari GitHub, file yang diunduh berupa ZIP berisi aplikasi siap pakai dengan:
 - **vendor/** - PHP dependencies (Composer packages)
 - **public/build/** - Frontend assets (CSS, JS yang sudah di-build oleh Vite)
 - **storage/** - Direktori untuk aplikasi (sudah ada struktur dan permissions)
+- **.env.example** - Template konfigurasi lokal
+
+Release ZIP tidak menyertakan `.env`, `node_modules/`, `tests/`, `.git/`, `.github/`, log, cache runtime, atau file lokal sensitif.
 
 ### Instalasi dari Release ZIP
 
@@ -158,6 +162,9 @@ Jika menggunakan release prebuild dari GitHub, file yang diunduh biasanya berupa
    DB_DATABASE=ptamaraalmedinatravel
    DB_USERNAME=root
    DB_PASSWORD=
+   ADMIN_INITIAL_NAME=Admin
+   ADMIN_INITIAL_EMAIL=admin@example.com
+   ADMIN_INITIAL_PASSWORD=ganti-password-ini
    ```
 5. **Buat database** di phpMyAdmin atau MySQL command line:
    ```sql
@@ -166,8 +173,9 @@ Jika menggunakan release prebuild dari GitHub, file yang diunduh biasanya berupa
 6. **Jalankan setup** dari folder aplikasi:
    ```bash
    php artisan key:generate
-   php artisan migrate --force
+   php artisan migrate --seed --force
    php artisan storage:link
+   php artisan optimize:clear
    ```
 7. **Akses aplikasi**:
    - Website: `http://localhost/ptamaraalmedinatravel`
@@ -181,8 +189,8 @@ Jika ingin setup dari source code tanpa menunggu release:
 2. **Extract** ke `C:\xampp\htdocs\ptamaraalmedinatravel`
 3. **Install dependencies**:
    ```bash
-   composer install
-   npm install
+   composer install --no-dev --prefer-dist --optimize-autoloader
+   npm ci
    npm run build
    ```
 4. **Salin dan konfigurasi .env**:
@@ -195,8 +203,9 @@ Jika ingin setup dari source code tanpa menunggu release:
    ```
 6. **Buat database** dan jalankan migrations:
    ```bash
-   php artisan migrate --force
+   php artisan migrate --seed --force
    php artisan storage:link
+   php artisan optimize:clear
    ```
 
 ### XAMPP Konfigurasi Virtual Host (Opsional)

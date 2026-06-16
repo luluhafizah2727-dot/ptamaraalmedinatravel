@@ -22,14 +22,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::query()->updateOrCreate(
-            ['email' => config('admin.initial_email', 'admin@example.com')],
-            [
-                'name' => config('admin.initial_name', 'Admin'),
-                'password' => config('admin.initial_password', 'rahasia'),
-                'is_admin' => true,
-            ],
-        );
+        $adminEmail = config('admin.initial_email');
+        $adminPassword = config('admin.initial_password');
+
+        if (filled($adminEmail) && filled($adminPassword)) {
+            User::query()->updateOrCreate(
+                ['email' => $adminEmail],
+                [
+                    'name' => config('admin.initial_name', 'Admin'),
+                    'password' => $adminPassword,
+                    'is_admin' => true,
+                ],
+            );
+        }
 
         CompanyProfile::query()->updateOrCreate(
             ['id' => 1],

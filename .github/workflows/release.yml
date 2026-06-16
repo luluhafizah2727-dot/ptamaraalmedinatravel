@@ -3,58 +3,212 @@ name: Build Release Package
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Git tag to package and upload to its release
+        required: true
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag_name }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag_name }}
 
-      - name: Install dependencies
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, ctype, curl, dom, fileinfo, filter, iconv, intl, mbstring, openssl, pdo_mysql, session, tokenizer, xml, xmlreader, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install packaging tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y php8.3 php8.3-cli php8.3-mbstring php8.3-bcmath php8.3-ctype php8.3-fileinfo php8.3-json php8.3-openssl php8.3-pdo php8.3-pdo-mysql php8.3-tokenizer php8.3-xml php8.3-zip curl
-          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-          php -v && composer --version && node -v && npm -v
+          sudo apt-get install -y rsync zip unzip
 
-      - name: Install PHP packages
+      - name: Validate Composer metadata
+        run: composer validate --strict --no-check-publish
+
+      - name: Install PHP runtime packages
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
 
-      - name: Install Node packages
-        run: npm install
+      - name: Verify PHP platform requirements
+        run: composer check-platform-reqs --no-dev
 
-      - name: Build frontend
+      - name: Install Node build packages
+        run: npm ci
+
+      - name: Build frontend assets
         run: npm run build
 
-      - name: Optimize Laravel
+      - name: Clear generated Laravel runtime caches
         run: |
-          php artisan optimize
-          php artisan filament:optimize
+          php artisan optimize:clear || true
+          rm -f bootstrap/cache/*.php
+          find storage/framework/cache -type f ! -name ".gitignore" ! -name ".gitkeep" -delete
+          find storage/framework/sessions -type f ! -name ".gitignore" ! -name ".gitkeep" -delete
+          find storage/framework/views -type f ! -name ".gitignore" ! -name ".gitkeep" -delete
+          find storage/logs -type f ! -name ".gitignore" ! -name ".gitkeep" -delete
 
-      - name: Create release package
+      - name: Create XAMPP release package
         run: |
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          set -euo pipefail
+
           PACKAGE_FILE="ptamaraalmedinatravel-${RELEASE_TAG}.zip"
-          
-          # Create required directories with .gitkeep
-          mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
-          touch storage/app/public/.gitkeep storage/framework/cache/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep
-          
-          # Create ZIP excluding unnecessary files
-          zip -r "$PACKAGE_FILE" . \
-            -x "node_modules/*" ".git/*" ".github/*" "tests/*" \
-                ".gitignore" ".env*" ".phpactor.json" ".phpunit*" \
-                "Homestead.*" "*.log" ".DS_Store" "Thumbs.db" \
-                "playwright-report/*" ".vscode/*" ".idea/*" ".cursor/*" "coverage/*"
-          
-          ls -lh "$PACKAGE_FILE"
-          echo "package_file=$PACKAGE_FILE" >> $GITHUB_ENV
+          STAGING_DIR="release-staging"
+          PACKAGE_COMMIT="$(git rev-parse HEAD)"
 
-      - name: Upload to release
+          rm -rf "$STAGING_DIR" dist
+          mkdir -p "$STAGING_DIR" dist
+
+          mkdir -p storage/app/public storage/app/private storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+          touch storage/app/public/.gitkeep storage/app/private/.gitkeep storage/framework/cache/.gitkeep storage/framework/cache/data/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep bootstrap/cache/.gitkeep
+
+          rsync -a ./ "$STAGING_DIR"/ \
+            --include='.env.example' \
+            --exclude='.env*' \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            --exclude='dist/' \
+            --exclude='release-staging/' \
+            --exclude='coverage/' \
+            --exclude='playwright-report/' \
+            --exclude='test-results/' \
+            --exclude='.phpunit.cache/' \
+            --exclude='.vscode/' \
+            --exclude='.idea/' \
+            --exclude='.cursor/' \
+            --exclude='.codex/' \
+            --exclude='public/storage' \
+            --exclude='public/hot' \
+            --exclude='storage/*.key' \
+            --exclude='storage/pail/' \
+            --exclude='auth.json' \
+            --exclude='.user.ini' \
+            --exclude='.npmrc' \
+            --exclude='*.log' \
+            --exclude='npm-debug.log*' \
+            --exclude='yarn-debug.log*' \
+            --exclude='yarn-error.log*' \
+            --exclude='.DS_Store' \
+            --exclude='Thumbs.db'
+
+          cat > "$STAGING_DIR/RELEASE-MANIFEST.txt" <<EOF
+          Package: ${PACKAGE_FILE}
+          Tag: ${RELEASE_TAG}
+          Commit: ${PACKAGE_COMMIT}
+          Built: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          Included runtime artifacts:
+          - vendor/ from composer install --no-dev
+          - public/build/ from npm run build
+          - .env.example template for local configuration
+
+          Excluded sensitive or local-only artifacts:
+          - .env and .env.* files
+          - .git/, .github/, node_modules/, tests/
+          - logs, runtime caches, local IDE folders, auth.json, .user.ini
+          EOF
+
+          (cd "$STAGING_DIR" && zip -qr "../dist/$PACKAGE_FILE" .)
+          sha256sum "dist/$PACKAGE_FILE" | tee "dist/$PACKAGE_FILE.sha256"
+          zipinfo -1 "dist/$PACKAGE_FILE" > dist/package-contents.txt
+
+          echo "package_file=dist/$PACKAGE_FILE" >> "$GITHUB_ENV"
+          echo "checksum_file=dist/$PACKAGE_FILE.sha256" >> "$GITHUB_ENV"
+
+      - name: Verify release package contents
         run: |
-          gh release upload "${{ github.event.release.tag_name }}" "${{ env.package_file }}" --clobber
+          set -euo pipefail
+
+          required_paths=(
+            "artisan"
+            "composer.json"
+            "composer.lock"
+            "vendor/autoload.php"
+            "public/index.php"
+            "public/.htaccess"
+            "public/build/manifest.json"
+            ".env.example"
+            "storage/app/public/.gitkeep"
+            "storage/framework/views/.gitkeep"
+            "storage/logs/.gitkeep"
+          )
+
+          for path in "${required_paths[@]}"; do
+            grep -Fxq "$path" dist/package-contents.txt || {
+              echo "Missing required path in release package: $path"
+              exit 1
+            }
+          done
+
+          required_prefixes=(
+            "vendor/"
+            "public/build/assets/"
+            "app/"
+            "bootstrap/"
+            "config/"
+            "database/"
+            "resources/"
+            "routes/"
+          )
+
+          for prefix in "${required_prefixes[@]}"; do
+            grep -q "^${prefix}" dist/package-contents.txt || {
+              echo "Missing required directory in release package: $prefix"
+              exit 1
+            }
+          done
+
+          if grep -E '^\.env($|\.)' dist/package-contents.txt | grep -vFx '.env.example'; then
+            echo "Forbidden env file found in release package"
+            exit 1
+          fi
+
+          forbidden_patterns=(
+            '^\.git/'
+            '^\.github/'
+            '^node_modules/'
+            '^tests/'
+            '^public/storage'
+            '^public/hot$'
+            '^storage/.*\.key$'
+            '^storage/logs/.*\.log$'
+            '^bootstrap/cache/.*\.php$'
+            '^auth\.json$'
+            '^\.user\.ini$'
+            '^\.npmrc$'
+          )
+
+          for pattern in "${forbidden_patterns[@]}"; do
+            if grep -Eq "$pattern" dist/package-contents.txt; then
+              echo "Forbidden path matched in release package: $pattern"
+              grep -En "$pattern" dist/package-contents.txt
+              exit 1
+            fi
+          done
+
+      - name: Upload package to release
+        run: gh release upload "$RELEASE_TAG" "$package_file" "$checksum_file" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
