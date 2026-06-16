@@ -89,8 +89,8 @@ jobs:
             --exclude='.github/' \
             --exclude='node_modules/' \
             --exclude='tests/' \
-            --exclude='dist/' \
-            --exclude='release-staging/' \
+            --exclude='/dist/' \
+            --exclude='/release-staging/' \
             --exclude='coverage/' \
             --exclude='playwright-report/' \
             --exclude='test-results/' \
@@ -151,6 +151,7 @@ jobs:
             "composer.json"
             "composer.lock"
             "vendor/autoload.php"
+            "vendor/livewire/livewire/dist/livewire.js"
             "public/index.php"
             "public/.htaccess"
             "public/build/manifest.json"
