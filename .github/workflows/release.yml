@@ -124,6 +124,7 @@ jobs:
           Included runtime artifacts:
           - vendor/ from composer install --no-dev
           - public/build/ from npm run build
+          - root index.php and .htaccess for XAMPP subfolder access
           - .env.example template for local configuration
 
           Excluded sensitive or local-only artifacts:
@@ -145,6 +146,8 @@ jobs:
 
           required_paths=(
             "artisan"
+            "index.php"
+            ".htaccess"
             "composer.json"
             "composer.lock"
             "vendor/autoload.php"

@@ -1,29 +1,30 @@
 # Setup PT Amara Al Medina Travel untuk XAMPP
 
-Panduan ini fokus untuk menjalankan aplikasi Laravel di XAMPP pada Windows.
+Panduan ini fokus untuk menjalankan release prebuild di XAMPP Windows dengan PHP 8.2.12.
 
-## Opsi 1: Instal dari Release ZIP
+## Instal dari Release ZIP
 
-Gunakan opsi ini jika Anda mengunduh file prebuild seperti:
+Gunakan file asset release, bukan source archive GitHub:
 
 ```text
 ptamaraalmedinatravel-v1.0.0.zip
 ```
 
-Release ZIP harus sudah berisi:
+Release ZIP sudah berisi:
 
 - `vendor/` dari `composer install --no-dev`
 - `public/build/` dari `npm run build`
-- `.env.example` sebagai template konfigurasi lokal
-- struktur `storage/` dan `bootstrap/cache/` yang diperlukan Laravel
+- root `index.php` dan `.htaccess` untuk akses langsung dari `htdocs\lulu`
+- `.env.example` dengan auto-setup XAMPP
+- struktur `storage/` dan `bootstrap/cache/`
 
 Release ZIP tidak menyertakan `.env`, `node_modules/`, `tests/`, `.git/`, `.github/`, log, cache runtime, atau file lokal sensitif.
 
-## Prasyarat untuk Release ZIP
+## Prasyarat
 
 - XAMPP dengan PHP 8.2.12
 - Apache dan MySQL/MariaDB dari XAMPP
-- PHP CLI dapat dijalankan dari terminal
+- Apache `mod_rewrite` aktif
 
 Ekstensi PHP yang perlu aktif:
 
@@ -42,78 +43,65 @@ Ekstensi PHP yang perlu aktif:
 - `xmlreader`
 - `zip`
 
-Untuk instalasi dari release ZIP, Composer dan Node.js tidak wajib karena dependency runtime dan asset frontend sudah ikut di dalam ZIP.
+Composer dan Node.js tidak wajib untuk release ZIP karena dependency runtime dan asset frontend sudah ikut di dalam ZIP.
 
-## Langkah Instalasi Release ZIP
+## Langkah Instalasi Cepat
 
-1. Download ZIP dari GitHub Releases.
+1. Download `ptamaraalmedinatravel-v1.0.0.zip` dari GitHub Releases.
 
-2. Extract ke folder XAMPP:
-
-   ```text
-   C:\xampp\htdocs\ptamaraalmedinatravel
-   ```
-
-3. Buka terminal di folder aplikasi:
-
-   ```bat
-   cd C:\xampp\htdocs\ptamaraalmedinatravel
-   ```
-
-4. Buat file `.env`:
-
-   ```bat
-   copy .env.example .env
-   ```
-
-5. Edit `.env` untuk XAMPP:
-
-   ```env
-   APP_NAME="PT Amara Al Medina Travel"
-   APP_ENV=local
-   APP_KEY=
-   APP_DEBUG=true
-   APP_URL=http://localhost/ptamaraalmedinatravel
-
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=ptamaraalmedinatravel
-   DB_USERNAME=root
-   DB_PASSWORD=
-
-   ADMIN_INITIAL_NAME=Admin
-   ADMIN_INITIAL_EMAIL=admin@example.com
-   ADMIN_INITIAL_PASSWORD=ganti-password-ini
-   ```
-
-   Ganti `ADMIN_INITIAL_EMAIL` dan `ADMIN_INITIAL_PASSWORD` sebelum menjalankan seed.
-
-6. Buat database lewat phpMyAdmin atau MySQL:
-
-   ```sql
-   CREATE DATABASE ptamaraalmedinatravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-
-7. Jalankan setup Laravel:
-
-   ```bat
-   php artisan key:generate
-   php artisan migrate --seed --force
-   php artisan storage:link
-   php artisan optimize:clear
-   ```
-
-8. Akses aplikasi:
+2. Extract isi ZIP ke folder:
 
    ```text
-   Website: http://localhost/ptamaraalmedinatravel
-   Admin:   http://localhost/ptamaraalmedinatravel/admin/login
+   C:\xampp\htdocs\lulu
    ```
 
-## Opsi 2: Instal dari Source Code
+3. Start `Apache` dan `MySQL` dari XAMPP Control Panel.
 
-Gunakan opsi ini jika Anda clone repository atau mengunduh source archive GitHub, bukan release prebuild.
+4. Buka:
+
+   ```text
+   Website: http://localhost/lulu/
+   Admin:   http://localhost/lulu/admin/login
+   ```
+
+Pada request pertama, aplikasi otomatis:
+
+- membuat `.env` dari `.env.example` jika belum ada,
+- mengisi `APP_KEY`,
+- mengatur `APP_URL=http://localhost/lulu`,
+- mengatur `FILESYSTEM_PUBLIC_URL=/lulu/storage`,
+- membuat database MySQL jika belum ada,
+- menjalankan migration dan seeder sekali,
+- melayani upload `/storage/...` tanpa wajib `php artisan storage:link`.
+
+Default database memakai konfigurasi XAMPP:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=ptamaraalmedinatravel
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Jika username/password MySQL berbeda, edit file `.env` setelah extract lalu refresh halaman.
+
+## Admin Awal
+
+Akun admin dibuat dari nilai di `.env`:
+
+```env
+ADMIN_INITIAL_NAME=Admin
+ADMIN_INITIAL_EMAIL=admin@example.com
+ADMIN_INITIAL_PASSWORD=change-this-password-before-seeding
+```
+
+Ubah email/password di `.env` sebelum membuka halaman pertama jika ingin credential berbeda. Jika sudah terlanjur seed, edit `.env`, hapus marker `storage/app/.xampp-installed.json`, lalu refresh halaman atau jalankan manual fallback.
+
+## Install dari Source Code
+
+Gunakan opsi ini jika clone repository, bukan release ZIP.
 
 Prasyarat tambahan:
 
@@ -129,17 +117,13 @@ composer install --no-dev --prefer-dist --optimize-autoloader
 npm ci
 npm run build
 copy .env.example .env
-php artisan key:generate
-php artisan migrate --seed --force
-php artisan storage:link
-php artisan optimize:clear
 ```
 
-Pastikan `.env` sudah diedit sebelum `migrate --seed --force`.
+Setelah itu buka aplikasi dari XAMPP. Jika auto-setup dinonaktifkan, gunakan manual fallback.
 
 ## Virtual Host Opsional
 
-Jika ingin memakai domain lokal seperti `amara.local`, arahkan document root Apache ke folder `public`.
+Mode prebuild tidak membutuhkan virtual host. Jika ingin memakai domain lokal seperti `amara.local`, arahkan document root Apache ke folder `public`.
 
 File:
 
@@ -151,10 +135,10 @@ Tambahkan:
 
 ```apache
 <VirtualHost *:80>
-    DocumentRoot "C:\xampp\htdocs\ptamaraalmedinatravel\public"
+    DocumentRoot "C:\xampp\htdocs\lulu\public"
     ServerName amara.local
 
-    <Directory "C:\xampp\htdocs\ptamaraalmedinatravel\public">
+    <Directory "C:\xampp\htdocs\lulu\public">
         AllowOverride All
         Require all granted
     </Directory>
@@ -167,18 +151,12 @@ Tambahkan ke hosts file:
 127.0.0.1  amara.local
 ```
 
-Jika memakai virtual host, ubah `.env`:
+Lalu restart Apache dan akses `http://amara.local`.
 
-```env
-APP_URL=http://amara.local
-```
-
-Lalu restart Apache.
-
-## Checklist Setelah Extract Release ZIP
+## Checklist Isi Release ZIP
 
 ```text
-ptamaraalmedinatravel/
+lulu/
 |-- app/
 |-- bootstrap/
 |   |-- cache/
@@ -196,6 +174,8 @@ ptamaraalmedinatravel/
 |   |-- logs/
 |-- vendor/
 |-- .env.example
+|-- .htaccess
+|-- index.php
 |-- artisan
 |-- composer.json
 |-- composer.lock
@@ -205,48 +185,50 @@ Tidak perlu ada `node_modules/` pada release ZIP.
 
 ## Troubleshooting
 
+### Halaman setup otomatis muncul
+
+Ikuti pesan di halaman tersebut. Penyebab paling umum:
+
+- MySQL di XAMPP belum running.
+- Credential `DB_USERNAME` / `DB_PASSWORD` di `.env` tidak cocok.
+- Folder aplikasi tidak writable.
+- Ekstensi `pdo_mysql` belum aktif.
+
 ### `Class not found` atau `vendor/autoload.php` tidak ditemukan
 
-File yang dipakai bukan release prebuild, atau ZIP tidak lengkap. Gunakan release ZIP yang memiliki `vendor/`.
+File yang dipakai bukan release prebuild, atau ZIP tidak lengkap. Gunakan asset release `ptamaraalmedinatravel-v1.0.0.zip`.
 
 ### CSS/JS tidak tampil
 
-Pastikan `public/build/manifest.json` ada. Jika setup dari source, jalankan:
+Pastikan `public/build/manifest.json` ada. Jika setup dari source:
 
 ```bat
 npm ci
 npm run build
 ```
 
+### 404 pada `http://localhost/lulu/`
+
+- Pastikan folder extract adalah `C:\xampp\htdocs\lulu`.
+- Pastikan root `.htaccess` ada.
+- Aktifkan `mod_rewrite` di Apache XAMPP.
+- Restart Apache setelah mengubah konfigurasi.
+
 ### Admin tidak bisa login
 
-Pastikan `ADMIN_INITIAL_EMAIL` dan `ADMIN_INITIAL_PASSWORD` sudah diisi sebelum menjalankan:
+Pastikan `ADMIN_INITIAL_EMAIL` dan `ADMIN_INITIAL_PASSWORD` di `.env` sesuai. Jika ingin seed ulang:
 
 ```bat
-php artisan migrate --seed --force
-```
-
-Jika sudah terlanjur seed dengan credential salah, edit `.env`, lalu jalankan:
-
-```bat
+del storage\app\.xampp-installed.json
 php artisan db:seed --force
 ```
 
-### Upload gambar tidak bisa
+### Manual fallback
 
-Jalankan terminal sebagai Administrator jika `storage:link` gagal:
+Jalankan dari folder aplikasi jika auto-setup tetap gagal:
 
 ```bat
-php artisan storage:link
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan optimize:clear
 ```
-
-Pastikan folder berikut writable:
-
-```text
-storage/
-bootstrap/cache/
-```
-
-### 404 pada route Laravel
-
-Aktifkan `mod_rewrite` di Apache XAMPP dan pastikan `public/.htaccess` ada.

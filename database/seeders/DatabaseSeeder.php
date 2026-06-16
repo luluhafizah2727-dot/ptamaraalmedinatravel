@@ -11,6 +11,7 @@ use App\Models\UmrahPackage;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
@@ -22,6 +23,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->copySeedStorageAssets();
+
         $adminEmail = config('admin.initial_email');
         $adminPassword = config('admin.initial_password');
 
@@ -190,6 +193,29 @@ class DatabaseSeeder extends Seeder
 
         foreach ($settings as $key => $value) {
             SiteSetting::query()->updateOrCreate(['key' => $key], ['value' => $value]);
+        }
+    }
+
+    private function copySeedStorageAssets(): void
+    {
+        $assets = [
+            'profiles/profile-office.jpeg' => 'profile-office.jpeg',
+            'packages/package-plus-tarim.jpeg' => 'package-plus-tarim.jpeg',
+            'packages/public-paket.jpeg' => 'Public_Paket.jpeg',
+            'galleries/public-galeri.jpeg' => 'Public_Galeri.jpeg',
+            'galleries/gallery-grid.jpeg' => 'gallery-grid.jpeg',
+        ];
+
+        foreach ($assets as $target => $source) {
+            $sourcePath = public_path('images/seed/'.$source);
+            $targetPath = storage_path('app/public/'.$target);
+
+            if (! is_file($sourcePath) || is_file($targetPath)) {
+                continue;
+            }
+
+            File::ensureDirectoryExists(dirname($targetPath));
+            File::copy($sourcePath, $targetPath);
         }
     }
 }

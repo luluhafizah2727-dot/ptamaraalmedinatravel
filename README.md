@@ -74,18 +74,18 @@ Untuk akses melalui browser, tambahkan entri pada file `hosts` jika Anda memakai
 - `public/images/seed/` berisi gambar fallback dan referensi seed.
 - Upload dari admin disimpan di disk `public` Laravel dan diakses melalui symlink `public/storage`.
 
-## Setup
+## Setup dari Source
+
+Untuk development dari source code, install dependency dan build asset:
 
 ```bash
 composer install
 npm ci
 npm run build
 cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link
-php artisan optimize:clear
 ```
+
+Pada XAMPP prebuild, perintah `key:generate`, `migrate --seed`, `storage:link`, dan `optimize:clear` tidak wajib dijalankan manual karena auto-setup lokal akan menanganinya saat halaman pertama dibuka.
 
 Seeder admin awal membaca environment berikut bila tersedia:
 
@@ -94,11 +94,7 @@ ADMIN_INITIAL_EMAIL=admin@example.com
 ADMIN_INITIAL_PASSWORD=ganti-password-ini
 ```
 
-Jika `ADMIN_INITIAL_EMAIL` atau `ADMIN_INITIAL_PASSWORD` kosong, seeder tidak membuat akun admin awal.
-
-Disk upload publik memakai URL relatif `/storage` secara default. Jika perlu override, gunakan `FILESYSTEM_PUBLIC_URL`.
-
-Jangan simpan credential database, password admin, atau secret `.env` di repository.
+Jika `ADMIN_INITIAL_EMAIL` atau `ADMIN_INITIAL_PASSWORD` kosong, seeder tidak membuat akun admin awal. Jangan simpan credential database, password admin, atau secret `.env` di repository.
 
 ## Deployment (vhost / server)
 
@@ -138,8 +134,9 @@ Untuk smoke-check lokal, panggil endpoint publik yang relevan menggunakan host a
 Jika menggunakan release prebuild dari GitHub, file yang diunduh berupa ZIP berisi aplikasi siap pakai dengan:
 - **vendor/** - PHP dependencies (Composer packages)
 - **public/build/** - Frontend assets (CSS, JS yang sudah di-build oleh Vite)
+- **index.php** dan **.htaccess** di root - Compatibility layer agar bisa dibuka dari `htdocs\lulu`
 - **storage/** - Direktori untuk aplikasi (sudah ada struktur dan permissions)
-- **.env.example** - Template konfigurasi lokal
+- **.env.example** - Template konfigurasi lokal dan auto-setup XAMPP
 
 Release ZIP tidak menyertakan `.env`, `node_modules/`, `tests/`, `.git/`, `.github/`, log, cache runtime, atau file lokal sensitif.
 
@@ -148,38 +145,23 @@ Release ZIP tidak menyertakan `.env`, `node_modules/`, `tests/`, `.git/`, `.gith
 1. **Download ZIP** dari [GitHub Releases](https://github.com/luluhafizah2727-dot/ptamaraalmedinatravel/releases)
 2. **Extract** ke folder XAMPP:
    ```
-   C:\xampp\htdocs\ptamaraalmedinatravel
+   C:\xampp\htdocs\lulu
    ```
-3. **Salin .env**:
-   ```bash
-   copy .env.example .env
-   ```
-4. **Konfigurasi database** di `.env`:
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=ptamaraalmedinatravel
-   DB_USERNAME=root
-   DB_PASSWORD=
-   ADMIN_INITIAL_NAME=Admin
-   ADMIN_INITIAL_EMAIL=admin@example.com
-   ADMIN_INITIAL_PASSWORD=ganti-password-ini
-   ```
-5. **Buat database** di phpMyAdmin atau MySQL command line:
-   ```sql
-   CREATE DATABASE ptamaraalmedinatravel;
-   ```
-6. **Jalankan setup** dari folder aplikasi:
-   ```bash
-   php artisan key:generate
-   php artisan migrate --seed --force
-   php artisan storage:link
-   php artisan optimize:clear
-   ```
-7. **Akses aplikasi**:
-   - Website: `http://localhost/ptamaraalmedinatravel`
-   - Admin: `http://localhost/ptamaraalmedinatravel/admin/login`
+3. **Start Apache dan MySQL** dari XAMPP Control Panel.
+4. **Buka aplikasi**:
+   - Jika folder extract bernama `lulu`: `http://localhost/lulu/`
+   - Jika folder extract bernama `ptamaraalmedinatravel`: `http://localhost/ptamaraalmedinatravel/`
+   - Admin: `http://localhost/lulu/admin/login`
+
+Pada request pertama, aplikasi otomatis:
+- membuat `.env` dari `.env.example` jika belum ada,
+- mengisi `APP_KEY`,
+- mendeteksi `APP_URL` dan `FILESYSTEM_PUBLIC_URL` dari URL yang dibuka,
+- membuat database MySQL jika belum ada,
+- menjalankan migration dan seeder sekali,
+- melayani `/storage/...` tanpa wajib membuat symlink `public/storage`.
+
+Default MySQL mengikuti XAMPP: host `127.0.0.1`, user `root`, password kosong. Jika credential berbeda, edit `.env` setelah extract lalu refresh halaman.
 
 ### Alternatif: Setup lokal tanpa Release ZIP
 
@@ -197,14 +179,10 @@ Jika ingin setup dari source code tanpa menunggu release:
    ```bash
    copy .env.example .env
    ```
-5. **Generate app key**:
+5. **Buka dari browser** atau jalankan manual fallback jika auto-setup dinonaktifkan:
    ```bash
    php artisan key:generate
-   ```
-6. **Buat database** dan jalankan migrations:
-   ```bash
    php artisan migrate --seed --force
-   php artisan storage:link
    php artisan optimize:clear
    ```
 
@@ -234,17 +212,25 @@ Kemudian akses via `http://ptamara.local` atau `http://ptamara.local/admin/login
 ### Troubleshooting XAMPP
 
 **Issue: 404 atau "page not found"**
-- Pastikan `.htaccess` di folder `public/` ada
+- Pastikan `.htaccess` di root project dan folder `public/` ada
 - Pastikan Apache module `mod_rewrite` aktif di XAMPP
-- Pastikan application running dengan correct document root
+- Untuk extract langsung ke `htdocs\lulu`, akses `http://localhost/lulu/`, bukan `http://localhost/lulu/public/`
 
 **Issue: Database connection error**
 - Pastikan MySQL service di XAMPP sudah running
 - Periksa username/password di `.env` (default: `root` dengan password kosong)
-- Pastikan database sudah dibuat
+- Jika `XAMPP_AUTO_CREATE_DATABASE=true`, database dibuat otomatis. Jika gagal, buat manual di phpMyAdmin.
 
 **Issue: Storage/upload tidak bekerja**
-- Pastikan folder `storage/` dan `public/` writable
-- Jalankan `php artisan storage:link` ulang jika symlink tidak ada
+- Pastikan folder `storage/` dan `public/` writable.
+- Release prebuild melayani `/storage/...` lewat route Laravel, sehingga `php artisan storage:link` tidak wajib untuk XAMPP.
 
-Jika release ZIP sudah berisi folder `public`, pastikan XAMPP DocumentRoot mengarah ke `C:\xampp\htdocs\ptamaraalmedinatravel\public` jika memakai virtual host. Jika tidak, gunakan URL yang sesuai dengan lokasi ekstrak.
+**Manual fallback jika auto-setup gagal**
+
+```bash
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan optimize:clear
+```
+
+Jika release ZIP sudah berisi folder `public`, Anda boleh tetap memakai virtual host ke folder `public/`. Untuk mode extract langsung, root `index.php` dan `.htaccess` sudah disiapkan agar URL `http://localhost/lulu/` berjalan tanpa konfigurasi vhost.
