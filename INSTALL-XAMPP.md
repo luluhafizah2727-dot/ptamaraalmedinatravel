@@ -7,7 +7,7 @@ Panduan ini fokus untuk menjalankan aplikasi Laravel di XAMPP pada Windows.
 Gunakan opsi ini jika Anda mengunduh file prebuild seperti:
 
 ```text
-ptamaraalmedinatravel-v1.0.1.zip
+ptamaraalmedinatravel-v1.0.0.zip
 ```
 
 Release ZIP harus sudah berisi:
@@ -21,7 +21,7 @@ Release ZIP tidak menyertakan `.env`, `node_modules/`, `tests/`, `.git/`, `.gith
 
 ## Prasyarat untuk Release ZIP
 
-- XAMPP dengan PHP 8.3+
+- XAMPP dengan PHP 8.2.12
 - Apache dan MySQL/MariaDB dari XAMPP
 - PHP CLI dapat dijalankan dari terminal
 

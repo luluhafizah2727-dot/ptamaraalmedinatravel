@@ -28,7 +28,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.2'
           extensions: bcmath, ctype, curl, dom, fileinfo, filter, iconv, intl, mbstring, openssl, pdo_mysql, session, tokenizer, xml, xmlreader, zip
           coverage: none
           tools: composer:v2
@@ -95,6 +95,7 @@ jobs:
             --exclude='playwright-report/' \
             --exclude='test-results/' \
             --exclude='.phpunit.cache/' \
+            --exclude='.phpunit.result.cache' \
             --exclude='.vscode/' \
             --exclude='.idea/' \
             --exclude='.cursor/' \
@@ -118,6 +119,7 @@ jobs:
           Tag: ${RELEASE_TAG}
           Commit: ${PACKAGE_COMMIT}
           Built: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          Target runtime: XAMPP PHP 8.2.12
 
           Included runtime artifacts:
           - vendor/ from composer install --no-dev

@@ -2,19 +2,22 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable([
-    'visited_on',
-    'visited_at',
-    'path',
-    'route_name',
-    'ip_hash',
-    'user_agent_hash',
-])]
 class VisitorLog extends Model
 {
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'visited_on',
+        'visited_at',
+        'path',
+        'route_name',
+        'ip_hash',
+        'user_agent_hash',
+    ];
+
     /**
      * @return array<string, string>
      */

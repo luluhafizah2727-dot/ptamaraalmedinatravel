@@ -4,8 +4,8 @@ Website profil dan panel admin untuk PT Amara Al Medina Travel. Aplikasi ini mer
 
 ## Stack
 
-- PHP 8.3
-- Laravel 13
+- PHP 8.2.12
+- Laravel 12
 - Filament 5 untuk panel admin `/admin`
 - MySQL/MariaDB
 - Tailwind/Vite untuk asset CSS dan JavaScript
@@ -14,7 +14,7 @@ Website profil dan panel admin untuk PT Amara Al Medina Travel. Aplikasi ini mer
 
 Minimal dan rekomendasi lingkungan untuk menjalankan proyek ini:
 
-- **PHP**: ^8.3 (sesuaikan dengan `composer.json`).
+- **PHP**: 8.2.12 atau kompatibel dengan constraint `^8.2` di `composer.json`.
 - **Composer**: versi 2.x.
 - **Node.js**: Node 22+ untuk build frontend dari source.
 - **npm / pnpm / yarn**: gunakan versi yang sesuai dengan Node.
@@ -104,7 +104,7 @@ Jangan simpan credential database, password admin, atau secret `.env` di reposit
 
 - Document root harus diarahkan ke `public/`.
 - Aktifkan rewrite Laravel sehingga semua permintaan diarahkan ke `public/index.php`.
-- Gunakan PHP-FPM 8.3 (atau versi yang kompatibel).
+- Gunakan PHP-FPM/PHP runtime 8.2.12 atau versi PHP 8.2 yang kompatibel.
 - Pastikan `storage/` dan `bootstrap/cache/` writable oleh user web server.
 - Jalankan `php artisan storage:link` setelah deploy.
 - Pastikan asset Livewire dan route publik dapat diakses dari server produksi.
