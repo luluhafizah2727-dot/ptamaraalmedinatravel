@@ -12,12 +12,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          tools: composer:2
-          extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, pdo_mysql, tokenizer, xml, zip
+      - name: Setup PHP & Node
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php8.3 php8.3-cli php8.3-fpm php8.3-mbstring php8.3-bcmath php8.3-ctype php8.3-fileinfo php8.3-json php8.3-openssl php8.3-pdo php8.3-pdo-mysql php8.3-tokenizer php8.3-xml php8.3-zip composer
+          php -v
+          composer --version
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
