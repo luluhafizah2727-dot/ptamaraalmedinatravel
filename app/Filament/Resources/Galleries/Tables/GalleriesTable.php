@@ -2,9 +2,7 @@
 
 namespace App\Filament\Resources\Galleries\Tables;
 
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
@@ -24,6 +22,7 @@ class GalleriesTable
                 IconColumn::make('is_active')->label('Tampil')->boolean(),
             ])
             ->defaultSort('sort_order')
+            ->paginated(false)
             ->filters([
                 TernaryFilter::make('is_active')->label('Status Tampil'),
             ])
@@ -36,11 +35,6 @@ class GalleriesTable
                     ->label('Hapus')
                     ->icon('heroicon-o-trash')
                     ->color('danger'),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()->label('Hapus terpilih'),
-                ]),
             ]);
     }
 }

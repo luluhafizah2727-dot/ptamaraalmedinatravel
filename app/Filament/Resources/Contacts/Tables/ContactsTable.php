@@ -2,9 +2,7 @@
 
 namespace App\Filament\Resources\Contacts\Tables;
 
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -23,6 +21,7 @@ class ContactsTable
                 IconColumn::make('is_active')->label('Tampil')->boolean(),
             ])
             ->defaultSort('updated_at', 'desc')
+            ->paginated(false)
             ->filters([
                 //
             ])
@@ -35,11 +34,6 @@ class ContactsTable
                     ->label('Hapus')
                     ->icon('heroicon-o-trash')
                     ->color('danger'),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()->label('Hapus terpilih'),
-                ]),
             ]);
     }
 }

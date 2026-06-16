@@ -2,9 +2,7 @@
 
 namespace App\Filament\Resources\Schedules\Tables;
 
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -32,6 +30,7 @@ class SchedulesTable
                 IconColumn::make('is_active')->label('Tampil')->boolean(),
             ])
             ->defaultSort('departure_date')
+            ->paginated(false)
             ->filters([
                 TernaryFilter::make('is_active')->label('Status Tampil'),
             ])
@@ -44,11 +43,6 @@ class SchedulesTable
                     ->label('Hapus')
                     ->icon('heroicon-o-trash')
                     ->color('danger'),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()->label('Hapus terpilih'),
-                ]),
             ]);
     }
 }
