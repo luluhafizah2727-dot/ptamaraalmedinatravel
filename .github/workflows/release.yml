@@ -1,0 +1,55 @@
+name: Build Release Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v4
+        with:
+          php-version: '8.3'
+          tools: composer:2
+          extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, pdo_mysql, tokenizer, xml, zip
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Optimize Laravel
+        run: |
+          php artisan optimize
+          php artisan filament:optimize
+
+      - name: Prepare release package
+        run: |
+          PACKAGE_NAME=ptamaraalmedinatravel-${{ github.event.release.tag_name }}.zip
+          mkdir -p release
+          mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
+          touch storage/app/public/.gitkeep storage/framework/cache/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep
+          zip -r release/$PACKAGE_NAME . -x ".git/*" ".github/*" "node_modules/*" "tests/*" "release/*" ".gitignore"
+          ls -lh release
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/ptamaraalmedinatravel-${{ github.event.release.tag_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

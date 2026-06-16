@@ -131,3 +131,32 @@ php artisan filament:optimize
 ```
 
 Untuk smoke-check lokal, panggil endpoint publik yang relevan menggunakan host atau alamat yang sesuai dengan konfigurasi lokal Anda.
+
+## Release ZIP untuk XAMPP
+
+Jika menggunakan release prebuild dari GitHub, file yang diunduh biasanya berupa ZIP berisi aplikasi siap pakai.
+
+1. Extract file ZIP ke folder XAMPP, misalnya:
+   - `C:\xampp\htdocs\ptamaraalmedinatravel`
+2. Salin file `.env.example` menjadi `.env`.
+3. Sesuaikan konfigurasi database di `.env`:
+   - `DB_CONNECTION=mysql`
+   - `DB_HOST=127.0.0.1`
+   - `DB_PORT=3306`
+   - `DB_DATABASE=nama_database`
+   - `DB_USERNAME=root`
+   - `DB_PASSWORD=`
+4. Pastikan database sudah dibuat di phpMyAdmin / MySQL.
+5. Jalankan perintah dari folder aplikasi:
+
+```bash
+php artisan key:generate
+php artisan migrate --force
+php artisan storage:link
+```
+
+6. Akses aplikasi di browser melalui path XAMPP:
+   - `http://localhost/ptamaraalmedinatravel`
+   - `http://localhost/ptamaraalmedinatravel/admin/login`
+
+Jika release ZIP sudah berisi folder `public`, pastikan XAMPP DocumentRoot mengarah ke `C:\xampp\htdocs\ptamaraalmedinatravel\public` jika memakai virtual host. Jika tidak, gunakan URL yang sesuai dengan lokasi ekstrak.
