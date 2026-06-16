@@ -100,8 +100,9 @@ final class XamppAutoSetup
 
         $shouldMigrate = self::truthy((string) env('XAMPP_AUTO_MIGRATE', true));
         $shouldSeed = self::truthy((string) env('XAMPP_AUTO_SEED', true));
+        $shouldCacheViews = self::truthy((string) env('XAMPP_AUTO_CACHE_VIEWS', true));
 
-        if (! $shouldMigrate && ! $shouldSeed) {
+        if (! $shouldMigrate && ! $shouldSeed && ! $shouldCacheViews) {
             return;
         }
 
@@ -112,8 +113,9 @@ final class XamppAutoSetup
         $signature = self::setupSignature($basePath);
 
         $databaseReady = self::databaseHasRequiredTables();
+        $viewsReady = ! $shouldCacheViews || self::compiledViewsReady($basePath);
 
-        if (! $force && self::markerMatches($markerPath, $signature) && $databaseReady) {
+        if (! $force && self::markerMatches($markerPath, $signature) && $databaseReady && $viewsReady) {
             return;
         }
 
@@ -130,8 +132,9 @@ final class XamppAutoSetup
             }
 
             $databaseReady = self::databaseHasRequiredTables();
+            $viewsReady = ! $shouldCacheViews || self::compiledViewsReady($basePath);
 
-            if (! $force && self::markerMatches($markerPath, $signature) && $databaseReady) {
+            if (! $force && self::markerMatches($markerPath, $signature) && $databaseReady && $viewsReady) {
                 return;
             }
 
@@ -147,11 +150,16 @@ final class XamppAutoSetup
                 self::runArtisan('db:seed', ['--force' => true]);
             }
 
+            if ($shouldCacheViews) {
+                self::runArtisan('view:cache');
+            }
+
             $payload = [
                 'installed_at' => gmdate('c'),
                 'signature' => $signature,
                 'migrate' => $shouldMigrate,
                 'seed' => $shouldSeed,
+                'view_cache' => $shouldCacheViews,
             ];
 
             if (file_put_contents($markerPath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) {
@@ -197,6 +205,13 @@ final class XamppAutoSetup
         } while ($exception = $exception->getPrevious());
 
         return false;
+    }
+
+    private static function compiledViewsReady(string $basePath): bool
+    {
+        $viewPath = $basePath.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'views';
+
+        return count(glob($viewPath.DIRECTORY_SEPARATOR.'*.php') ?: []) > 0;
     }
 
     public static function renderSetupError(Throwable $exception): never
@@ -310,8 +325,19 @@ final class XamppAutoSetup
 
     private static function setupSignature(string $basePath): string
     {
-        $files = glob($basePath.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations'.DIRECTORY_SEPARATOR.'*.php') ?: [];
-        $files[] = $basePath.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'seeders'.DIRECTORY_SEPARATOR.'DatabaseSeeder.php';
+        $files = [];
+
+        foreach (['database/migrations', 'database/seeders', 'app/Filament', 'app/Providers/Filament'] as $directory) {
+            $files = [
+                ...$files,
+                ...self::recursiveFiles($basePath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $directory), 'php'),
+            ];
+        }
+
+        $files = [
+            ...$files,
+            ...self::recursiveFiles($basePath.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'views', 'blade.php'),
+        ];
 
         sort($files);
 
@@ -324,6 +350,33 @@ final class XamppAutoSetup
         }
 
         return hash('sha256', implode('|', $parts));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function recursiveFiles(string $directory, string $extension): array
+    {
+        if (! is_dir($directory)) {
+            return [];
+        }
+
+        $files = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+        );
+
+        foreach ($iterator as $file) {
+            if (! $file->isFile()) {
+                continue;
+            }
+
+            if (str_ends_with($file->getFilename(), '.'.$extension)) {
+                $files[] = $file->getPathname();
+            }
+        }
+
+        return $files;
     }
 
     private static function markerMatches(string $markerPath, string $signature): bool
