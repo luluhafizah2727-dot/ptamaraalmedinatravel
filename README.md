@@ -1,232 +1,334 @@
 # PT Amara Al Medina Travel
 
-Website profil dan panel admin untuk PT Amara Al Medina Travel. Aplikasi ini merupakan sistem berbasis Laravel dengan panel admin Filament untuk mengelola konten (paket umrah, jadwal, galeri, profil perusahaan, dan kontak).
+PT Amara Al Medina Travel adalah aplikasi website profil perusahaan dan panel admin. Website publik dipakai untuk menampilkan informasi perusahaan, paket umrah, jadwal, galeri, dan kontak. Panel admin dipakai untuk mengelola isi website tersebut.
 
-## Stack
+Panduan ini ditulis untuk pembaca yang baru pertama kali melihat project ini. Jika tujuan Anda hanya ingin menjalankan aplikasi di XAMPP, gunakan bagian **Cara Paling Mudah: Pakai Prebuild ZIP**.
 
-- PHP 8.2.12
-- Laravel 12
-- Filament 5 untuk panel admin `/admin`
-- MySQL/MariaDB
-- Tailwind/Vite untuk asset CSS dan JavaScript
+## Ringkasan Singkat
 
-## Requirements
+- Aplikasi dibuat dengan Laravel 12.
+- PHP yang direkomendasikan: PHP 8.2.12, sesuai bawaan XAMPP yang diuji.
+- Database memakai MySQL/MariaDB dari XAMPP.
+- Panel admin ada di `/admin/login`.
+- Release prebuild sudah berisi dependency PHP dan asset frontend, jadi Composer dan Node.js tidak wajib dipasang untuk penggunaan biasa di XAMPP.
 
-Minimal dan rekomendasi lingkungan untuk menjalankan proyek ini:
+## Cara Paling Mudah: Pakai Prebuild ZIP
 
-- **PHP**: 8.2.12 atau kompatibel dengan constraint `^8.2` di `composer.json`.
-- **Composer**: versi 2.x.
-- **Node.js**: Node 22+ untuk build frontend dari source.
-- **npm / pnpm / yarn**: gunakan versi yang sesuai dengan Node.
-- **Database**: MySQL atau MariaDB (MySQL 5.7+/8.x atau MariaDB setara).
+Gunakan cara ini jika Anda ingin menjalankan aplikasi di XAMPP tanpa proses build manual.
 
-PHP extensions yang umumnya diperlukan:
+### 1. Siapkan XAMPP
 
-- `ctype`
-- `fileinfo`
-- `intl`
-- `json`
-- `mbstring`
-- `openssl`
-- `pdo` dan driver database (`pdo_mysql` untuk MySQL/MariaDB)
-- `tokenizer`
-- `xml`
-- `zip` (disarankan untuk installer dan beberapa paket Composer)
+Pastikan XAMPP sudah terpasang dan memakai PHP 8.2.12.
 
-Opsional (bergantung fitur yang dipakai):
+Buka XAMPP Control Panel, lalu nyalakan:
 
-- `gd` atau `imagick` untuk manipulasi gambar
-- `exif` jika aplikasi memproses metadata gambar
-- `curl` jika ada panggilan HTTP menggunakan ekstensi ini
+- Apache
+- MySQL
 
-Perangkat lunak/system tools:
+Composer dan Node.js tidak diperlukan untuk menjalankan file prebuild.
 
-- `git` (untuk kontrol versi dan workflow deploy)
-- `unzip` (dibutuhkan Composer pada beberapa lingkungan)
-- PHP-FPM (untuk deployment) atau built-in PHP server untuk pengujian
+### 2. Download File Prebuild
 
-Contoh cara memeriksa versi dasar:
+Buka halaman **Releases** di GitHub, lalu download file:
 
-```bash
-php -v
-composer --version
-node -v
-npm -v
-mysql --version
+```text
+ptamaraalmedinatravel-v1.0.0.zip
 ```
 
-## Akses Lokal
+Catatan penting:
 
-Untuk pengujian lokal, jalankan aplikasi di server development (mis. Valet, Docker, atau built-in PHP server) atau gunakan vhost lokal yang memetakan host ke `127.0.0.1`.
+- Pilih file ZIP dengan nama seperti di atas.
+- Jangan memakai tombol **Source code (zip)** dari GitHub untuk instalasi XAMPP, karena source archive belum berisi `vendor/` dan asset build.
 
-Contoh pengecekan endpoint lokal menggunakan header Host (ganti `local.test` dengan host lokal Anda jika perlu):
+### 3. Extract ke Folder htdocs
 
-```bash
-curl -H 'Host: local.test' http://127.0.0.1/
-curl -H 'Host: local.test' http://127.0.0.1/admin/login
+Extract isi ZIP ke folder XAMPP:
+
+```text
+C:\xampp\htdocs\ptamaraalmedinatravel
 ```
 
-Untuk akses melalui browser, tambahkan entri pada file `hosts` jika Anda memakai host custom, atau akses langsung pada alamat yang dikonfigurasi oleh environment Anda.
+Jika XAMPP Anda berada di lokasi lain, sesuaikan bagian awal path-nya. Contoh:
 
-## Struktur Asset
+```text
+C:\Users\Nama Anda\Documents\xampp\htdocs\ptamaraalmedinatravel
+```
 
-- `public/images/site/` berisi asset aktif: `logo.png` dan `beranda-img.jpg`.
-- `public/images/seed/` berisi gambar fallback dan referensi seed.
-- Upload dari admin disimpan di disk `public` Laravel dan diakses melalui symlink `public/storage`.
+Yang penting, folder project berada di dalam folder `htdocs`.
 
-## Setup dari Source
+### 4. Buka di Browser
 
-Untuk development dari source code, install dependency dan build asset:
+Jika foldernya bernama `ptamaraalmedinatravel`, buka:
+
+```text
+http://localhost/ptamaraalmedinatravel/
+```
+
+Panel admin:
+
+```text
+http://localhost/ptamaraalmedinatravel/admin/login
+```
+
+Pada pembukaan pertama, aplikasi akan melakukan setup otomatis. Tunggu sampai halaman selesai terbuka.
+
+## Apa yang Otomatis Dilakukan Saat Pertama Dibuka
+
+Prebuild XAMPP sudah dibuat agar pengguna tidak perlu menjalankan perintah ini secara manual:
+
+```bash
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan storage:link
+php artisan optimize:clear
+```
+
+Saat halaman pertama dibuka lewat `localhost`, aplikasi otomatis:
+
+- membuat file `.env` dari `.env.example` jika belum ada,
+- membuat `APP_KEY` jika masih kosong,
+- menyesuaikan `APP_URL` berdasarkan URL yang sedang dibuka,
+- menyesuaikan URL storage agar gambar tetap bisa tampil dari subfolder XAMPP,
+- membuat database MySQL jika belum ada,
+- menjalankan migration dan seeder satu kali,
+- menyiapkan folder runtime seperti `storage/` dan `bootstrap/cache/`,
+- melayani file `/storage/...` tanpa wajib menjalankan `php artisan storage:link`.
+
+Setup otomatis ditandai dengan file:
+
+```text
+storage\app\.xampp-installed.json
+```
+
+Selama file marker ini masih cocok dengan migration dan seeder saat ini, proses setup tidak diulang pada setiap refresh.
+
+## Login Admin Awal
+
+Credential admin awal diambil dari file `.env`.
+
+Default pada prebuild:
+
+```env
+ADMIN_INITIAL_EMAIL=admin@example.com
+ADMIN_INITIAL_PASSWORD=admin!2345
+```
+
+Saran:
+
+- Untuk penggunaan lokal biasa, Anda bisa login memakai credential default tersebut.
+- Jika ingin mengganti credential sebelum setup pertama, edit `.env.example` atau `.env` sebelum membuka halaman pertama.
+- Jika setup sudah terlanjur berjalan, ubah data user lewat database/phpMyAdmin atau jalankan ulang seeder secara manual.
+
+## Memahami File .env
+
+File `.env` adalah file konfigurasi lokal. File ini dibuat otomatis dari `.env.example` saat aplikasi pertama kali dibuka.
+
+Jangan upload atau commit file `.env`, karena file ini bisa berisi password database, password email, dan secret aplikasi.
+
+### Pengaturan Aplikasi
+
+```env
+APP_NAME="PT Amara Al Medina Travel"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost/ptamaraalmedinatravel
+```
+
+Penjelasan:
+
+- `APP_NAME`: nama aplikasi yang tampil di beberapa bagian sistem.
+- `APP_ENV`: lingkungan aplikasi. Untuk XAMPP lokal gunakan `local`.
+- `APP_KEY`: kunci enkripsi Laravel. Pada prebuild, nilai ini dibuat otomatis jika kosong.
+- `APP_DEBUG`: jika `true`, error tampil lebih detail. Untuk server publik, ubah ke `false`.
+- `APP_URL`: alamat utama aplikasi. Pada XAMPP prebuild, nilai ini bisa dideteksi otomatis dari URL pertama yang dibuka.
+
+### Pengaturan Auto-Setup XAMPP
+
+```env
+XAMPP_AUTO_SETUP=true
+XAMPP_AUTO_DETECT_URL=true
+XAMPP_AUTO_FILE_RUNTIME=true
+XAMPP_AUTO_CREATE_DATABASE=true
+XAMPP_AUTO_MIGRATE=true
+XAMPP_AUTO_SEED=true
+```
+
+Penjelasan:
+
+- `XAMPP_AUTO_SETUP`: mengaktifkan setup otomatis untuk XAMPP/local.
+- `XAMPP_AUTO_DETECT_URL`: membuat aplikasi mengisi `APP_URL` dan `FILESYSTEM_PUBLIC_URL` dari URL browser.
+- `XAMPP_AUTO_FILE_RUNTIME`: memakai session file, cache file, dan queue sync agar tidak bergantung pada tabel database saat request pertama.
+- `XAMPP_AUTO_CREATE_DATABASE`: membuat database otomatis jika belum ada.
+- `XAMPP_AUTO_MIGRATE`: menjalankan migration otomatis.
+- `XAMPP_AUTO_SEED`: mengisi data awal otomatis.
+
+Untuk pemakaian XAMPP yang sederhana, biarkan semua nilai di atas tetap `true`.
+
+### Pengaturan Database
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=ptamaraalmedinatravel
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Penjelasan:
+
+- `DB_CONNECTION`: jenis database. Untuk XAMPP gunakan `mysql`.
+- `DB_HOST`: alamat database. Untuk XAMPP biasanya `127.0.0.1`.
+- `DB_PORT`: port MySQL. Default XAMPP biasanya `3306`.
+- `DB_DATABASE`: nama database yang akan dipakai. Jika auto-create aktif, database ini dibuat otomatis.
+- `DB_USERNAME`: username MySQL. Default XAMPP biasanya `root`.
+- `DB_PASSWORD`: password MySQL. Default XAMPP biasanya kosong.
+
+Jika MySQL Anda memakai password, isi `DB_PASSWORD` sesuai password tersebut.
+
+### Pengaturan Session, Cache, dan Queue
+
+```env
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
+```
+
+Penjelasan:
+
+- `SESSION_DRIVER=file`: data login/session disimpan di file lokal.
+- `CACHE_STORE=file`: cache disimpan di file lokal.
+- `QUEUE_CONNECTION=sync`: proses queue dijalankan langsung tanpa worker tambahan.
+
+Nilai ini dipilih agar first-run di XAMPP lebih mudah dan tidak error sebelum tabel database dibuat.
+
+### Pengaturan File dan Gambar
+
+```env
+FILESYSTEM_DISK=public
+FILESYSTEM_PUBLIC_URL=/storage
+```
+
+Penjelasan:
+
+- `FILESYSTEM_DISK=public`: upload dan gambar publik memakai storage Laravel public.
+- `FILESYSTEM_PUBLIC_URL`: URL untuk membaca file publik. Pada mode subfolder XAMPP, nilai ini otomatis disesuaikan, misalnya `/ptamaraalmedinatravel/storage`.
+
+Prebuild juga memiliki route fallback untuk `/storage/...`, sehingga `php artisan storage:link` tidak wajib untuk penggunaan XAMPP sederhana.
+
+### Pengaturan Email
+
+```env
+MAIL_MAILER=log
+MAIL_HOST=127.0.0.1
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+Default `MAIL_MAILER=log` berarti email tidak benar-benar dikirim, tetapi dicatat ke log. Ini aman untuk development lokal.
+
+Jika aplikasi nanti perlu mengirim email sungguhan, ubah pengaturan `MAIL_*` sesuai layanan email yang dipakai.
+
+### Pengaturan Admin Awal
+
+```env
+ADMIN_INITIAL_NAME=Admin
+ADMIN_INITIAL_EMAIL=admin@example.com
+ADMIN_INITIAL_PASSWORD=admin!2345
+```
+
+Penjelasan:
+
+- `ADMIN_INITIAL_NAME`: nama akun admin awal.
+- `ADMIN_INITIAL_EMAIL`: email login admin awal.
+- `ADMIN_INITIAL_PASSWORD`: password login admin awal.
+
+Jika email atau password dikosongkan, seeder tidak membuat admin awal.
+
+## Isi Prebuild ZIP
+
+Prebuild final berisi file yang dibutuhkan untuk menjalankan aplikasi:
+
+```text
+app/
+bootstrap/
+config/
+database/
+public/
+resources/
+routes/
+storage/
+vendor/
+.env.example
+.htaccess
+index.php
+artisan
+composer.json
+composer.lock
+```
+
+File penting:
+
+- `vendor/`: dependency PHP dari Composer.
+- `public/build/`: asset CSS dan JavaScript hasil build.
+- `index.php` di root: front controller khusus agar aplikasi bisa dibuka langsung dari subfolder `htdocs`.
+- `.htaccess` di root: aturan rewrite untuk route Laravel dan asset publik.
+- `public/index.php`: entrypoint Laravel standar untuk deployment normal atau virtual host.
+- `.env.example`: template konfigurasi lokal.
+
+File yang sengaja tidak disertakan:
+
+- `.env`
+- `.git/`
+- `.github/`
+- `node_modules/`
+- `tests/`
+- log runtime
+- cache runtime
+- file credential lokal seperti `auth.json`
+
+## Jika Ingin Mengubah Nama Folder
+
+Anda boleh mengganti nama folder hasil extract.
+
+Contoh:
+
+```text
+C:\xampp\htdocs\ptamaraalmedinatravel
+```
+
+maka URL:
+
+```text
+http://localhost/ptamaraalmedinatravel/
+```
+
+Jika nama foldernya berbeda, URL juga mengikuti nama folder tersebut. Auto-setup akan mencoba menyesuaikan `APP_URL` dan `FILESYSTEM_PUBLIC_URL` dari URL yang pertama kali dibuka.
+
+## Setup dari Source Code
+
+Gunakan bagian ini hanya jika Anda ingin mengembangkan project, mengubah kode, atau membuat release baru.
+
+Kebutuhan tambahan:
+
+- Composer 2.x
+- Node.js 22+
+- npm
+
+Langkah dasar:
 
 ```bash
 composer install
 npm ci
 npm run build
-cp .env.example .env
+copy .env.example .env
 ```
 
-Pada XAMPP prebuild, perintah `key:generate`, `migrate --seed`, `storage:link`, dan `optimize:clear` tidak wajib dijalankan manual karena auto-setup lokal akan menanganinya saat halaman pertama dibuka.
-
-Seeder admin awal membaca environment berikut bila tersedia:
-
-```env
-ADMIN_INITIAL_EMAIL=admin@example.com
-ADMIN_INITIAL_PASSWORD=ganti-password-ini
-```
-
-Jika `ADMIN_INITIAL_EMAIL` atau `ADMIN_INITIAL_PASSWORD` kosong, seeder tidak membuat akun admin awal. Jangan simpan credential database, password admin, atau secret `.env` di repository.
-
-## Deployment (vhost / server)
-
-- Document root harus diarahkan ke `public/`.
-- Aktifkan rewrite Laravel sehingga semua permintaan diarahkan ke `public/index.php`.
-- Gunakan PHP-FPM/PHP runtime 8.2.12 atau versi PHP 8.2 yang kompatibel.
-- Pastikan `storage/` dan `bootstrap/cache/` writable oleh user web server.
-- Jalankan `php artisan storage:link` setelah deploy.
-- Pastikan asset Livewire dan route publik dapat diakses dari server produksi.
-
-## Admin
-
-Panel admin tersedia di:
-
-```text
-/admin/login
-```
-
-Akses panel dibatasi untuk user dengan flag admin. Setelah login berhasil, user diarahkan ke dashboard Filament untuk mengelola paket umrah, jadwal, galeri, profil, kontak, dan pengaturan website.
-
-Dashboard juga menampilkan grafik pengunjung 14 hari terakhir. Tracking hanya berjalan untuk route publik dan menyimpan hash IP/user-agent, bukan IP mentah.
-
-## Test dan Build
-
-Jalankan test dan build seperti biasa untuk proyek Laravel + frontend:
-
-```bash
-php artisan test
-npm run build
-php artisan optimize:clear
-```
-
-Untuk smoke-check lokal, panggil endpoint publik yang relevan menggunakan host atau alamat yang sesuai dengan konfigurasi lokal Anda.
-
-## Release ZIP untuk XAMPP
-
-Jika menggunakan release prebuild dari GitHub, file yang diunduh berupa ZIP berisi aplikasi siap pakai dengan:
-- **vendor/** - PHP dependencies (Composer packages)
-- **public/build/** - Frontend assets (CSS, JS yang sudah di-build oleh Vite)
-- **index.php** dan **.htaccess** di root - Compatibility layer agar bisa dibuka dari `htdocs\lulu`
-- **storage/** - Direktori untuk aplikasi (sudah ada struktur dan permissions)
-- **.env.example** - Template konfigurasi lokal dan auto-setup XAMPP
-
-Release ZIP tidak menyertakan `.env`, `node_modules/`, `tests/`, `.git/`, `.github/`, log, cache runtime, atau file lokal sensitif.
-
-### Instalasi dari Release ZIP
-
-1. **Download ZIP** dari [GitHub Releases](https://github.com/luluhafizah2727-dot/ptamaraalmedinatravel/releases)
-2. **Extract** ke folder XAMPP:
-   ```
-   C:\xampp\htdocs\lulu
-   ```
-3. **Start Apache dan MySQL** dari XAMPP Control Panel.
-4. **Buka aplikasi**:
-   - Jika folder extract bernama `lulu`: `http://localhost/lulu/`
-   - Jika folder extract bernama `ptamaraalmedinatravel`: `http://localhost/ptamaraalmedinatravel/`
-   - Admin: `http://localhost/lulu/admin/login`
-
-Pada request pertama, aplikasi otomatis:
-- membuat `.env` dari `.env.example` jika belum ada,
-- mengisi `APP_KEY`,
-- mendeteksi `APP_URL` dan `FILESYSTEM_PUBLIC_URL` dari URL yang dibuka,
-- membuat database MySQL jika belum ada,
-- menjalankan migration dan seeder sekali,
-- melayani `/storage/...` tanpa wajib membuat symlink `public/storage`.
-
-Default MySQL mengikuti XAMPP: host `127.0.0.1`, user `root`, password kosong. Jika credential berbeda, edit `.env` setelah extract lalu refresh halaman.
-Untuk first-run yang lebih aman, prebuild memakai `SESSION_DRIVER=file`, `CACHE_STORE=file`, dan `QUEUE_CONNECTION=sync`; data utama aplikasi tetap disimpan di MySQL.
-
-### Alternatif: Setup lokal tanpa Release ZIP
-
-Jika ingin setup dari source code tanpa menunggu release:
-
-1. **Clone atau download** repository
-2. **Extract** ke `C:\xampp\htdocs\ptamaraalmedinatravel`
-3. **Install dependencies**:
-   ```bash
-   composer install --no-dev --prefer-dist --optimize-autoloader
-   npm ci
-   npm run build
-   ```
-4. **Salin dan konfigurasi .env**:
-   ```bash
-   copy .env.example .env
-   ```
-5. **Buka dari browser** atau jalankan manual fallback jika auto-setup dinonaktifkan:
-   ```bash
-   php artisan key:generate
-   php artisan migrate --seed --force
-   php artisan optimize:clear
-   ```
-
-### XAMPP Konfigurasi Virtual Host (Opsional)
-
-Jika ingin menggunakan domain custom (misalnya `ptamara.local`) alih-alih path:
-
-**File: `C:\xampp\apache\conf\extra\httpd-vhosts.conf`**
-```apache
-<VirtualHost *:80>
-    DocumentRoot "C:\xampp\htdocs\ptamaraalmedinatravel\public"
-    ServerName ptamara.local
-    <Directory "C:\xampp\htdocs\ptamaraalmedinatravel\public">
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-```
-
-**File: `C:\Windows\System32\drivers\etc\hosts`**
-```
-127.0.0.1  ptamara.local
-```
-
-Kemudian akses via `http://ptamara.local` atau `http://ptamara.local/admin/login`.
-
-### Troubleshooting XAMPP
-
-**Issue: 404 atau "page not found"**
-- Pastikan `.htaccess` di root project dan folder `public/` ada
-- Pastikan Apache module `mod_rewrite` aktif di XAMPP
-- Untuk extract langsung ke `htdocs\lulu`, akses `http://localhost/lulu/`, bukan `http://localhost/lulu/public/`
-
-**Issue: Database connection error**
-- Pastikan MySQL service di XAMPP sudah running
-- Periksa username/password di `.env` (default: `root` dengan password kosong)
-- Jika `XAMPP_AUTO_CREATE_DATABASE=true`, database dibuat otomatis. Jika gagal, buat manual di phpMyAdmin.
-
-**Issue: Storage/upload tidak bekerja**
-- Pastikan folder `storage/` dan `public/` writable.
-- Release prebuild melayani `/storage/...` lewat route Laravel, sehingga `php artisan storage:link` tidak wajib untuk XAMPP.
-
-**Manual fallback jika auto-setup gagal**
+Setelah itu buka aplikasi dari XAMPP atau gunakan PHP development server. Jika auto-setup dinonaktifkan, jalankan:
 
 ```bash
 php artisan key:generate
@@ -234,4 +336,106 @@ php artisan migrate --seed --force
 php artisan optimize:clear
 ```
 
-Jika release ZIP sudah berisi folder `public`, Anda boleh tetap memakai virtual host ke folder `public/`. Untuk mode extract langsung, root `index.php` dan `.htaccess` sudah disiapkan agar URL `http://localhost/lulu/` berjalan tanpa konfigurasi vhost.
+## Deployment dengan Virtual Host
+
+Untuk server produksi atau virtual host lokal, lebih baik arahkan document root ke folder `public/`.
+
+Contoh Apache virtual host:
+
+```apache
+<VirtualHost *:80>
+    DocumentRoot "C:\xampp\htdocs\ptamaraalmedinatravel\public"
+    ServerName ptamaraalmedinatravel.local
+
+    <Directory "C:\xampp\htdocs\ptamaraalmedinatravel\public">
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+Tambahkan ke file hosts Windows jika memakai domain lokal:
+
+```text
+127.0.0.1  ptamaraalmedinatravel.local
+```
+
+Lalu restart Apache dan buka:
+
+```text
+http://ptamaraalmedinatravel.local/
+```
+
+## Troubleshooting
+
+### Halaman tidak bisa dibuka
+
+Periksa:
+
+- Apache di XAMPP sudah running.
+- Folder project berada di dalam `htdocs`.
+- URL browser sesuai nama folder.
+- File root `.htaccess` masih ada.
+- Apache `mod_rewrite` aktif.
+
+### Error database
+
+Periksa:
+
+- MySQL di XAMPP sudah running.
+- `DB_HOST`, `DB_PORT`, `DB_USERNAME`, dan `DB_PASSWORD` di `.env` benar.
+- Jika memakai default XAMPP, username biasanya `root` dan password kosong.
+- Jika `XAMPP_AUTO_CREATE_DATABASE=true`, database akan dibuat otomatis.
+
+### CSS atau JavaScript tidak tampil
+
+Periksa:
+
+- File `public/build/manifest.json` ada.
+- Folder `public/build/assets/` ada.
+- Jika memakai source code, jalankan `npm ci` lalu `npm run build`.
+
+### Gambar storage tidak tampil
+
+Untuk prebuild XAMPP, `/storage/...` sudah dilayani lewat route Laravel. Jika tetap bermasalah:
+
+- Pastikan folder `storage/app/public/` ada.
+- Pastikan folder project bisa ditulis oleh Apache.
+- Refresh halaman setelah setup pertama selesai.
+
+### Admin tidak bisa login
+
+Periksa nilai:
+
+```env
+ADMIN_INITIAL_EMAIL=
+ADMIN_INITIAL_PASSWORD=
+```
+
+Jika database sudah pernah diseed, mengubah `.env` tidak otomatis mengubah user lama. Ubah lewat database/phpMyAdmin atau jalankan seeder ulang secara manual.
+
+### Manual fallback jika setup otomatis gagal
+
+Buka terminal di folder project, lalu jalankan:
+
+```bash
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan optimize:clear
+```
+
+Perintah `php artisan storage:link` biasanya tidak wajib untuk prebuild XAMPP, tetapi boleh dijalankan jika Anda memakai virtual host ke folder `public/`.
+
+## Perintah Verifikasi Developer
+
+Untuk developer yang ingin memastikan build bersih:
+
+```bash
+composer validate --strict --no-check-publish
+composer check-platform-reqs --no-dev
+php artisan test
+npm run build
+npm audit --audit-level=moderate
+```
+
+Perintah di atas tidak wajib untuk pengguna prebuild biasa.
