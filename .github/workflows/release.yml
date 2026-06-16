@@ -17,12 +17,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag_name }}
 
     steps:
       - name: Checkout release tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.3
         with:
           ref: ${{ github.event.release.tag_name || inputs.tag_name }}
 
@@ -35,7 +34,7 @@ jobs:
           tools: composer:v2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: '22'
           cache: npm
