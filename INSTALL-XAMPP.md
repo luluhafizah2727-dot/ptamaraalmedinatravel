@@ -85,6 +85,16 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
+Untuk menghindari error session sebelum migration selesai, prebuild memakai:
+
+```env
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
+```
+
+Data utama aplikasi tetap tersimpan di database MySQL.
+
 Jika username/password MySQL berbeda, edit file `.env` setelah extract lalu refresh halaman.
 
 ## Admin Awal

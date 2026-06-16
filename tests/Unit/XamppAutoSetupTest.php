@@ -32,10 +32,14 @@ class XamppAutoSetupTest extends TestCase
             'APP_URL=http://localhost/old',
             'XAMPP_AUTO_SETUP=true',
             'XAMPP_AUTO_DETECT_URL=true',
+            'XAMPP_AUTO_FILE_RUNTIME=true',
             'XAMPP_AUTO_CREATE_DATABASE=false',
             'DB_CONNECTION=mysql',
             'DB_DATABASE=ptamaraalmedinatravel',
             'FILESYSTEM_PUBLIC_URL=/storage',
+            'SESSION_DRIVER=database',
+            'CACHE_STORE=database',
+            'QUEUE_CONNECTION=database',
         ]);
 
         XamppAutoSetup::preflight($this->basePath, [
@@ -50,6 +54,9 @@ class XamppAutoSetupTest extends TestCase
         $this->assertStringContainsString('APP_KEY=base64:', $env);
         $this->assertStringContainsString('APP_URL=http://localhost/lulu', $env);
         $this->assertStringContainsString('FILESYSTEM_PUBLIC_URL=/lulu/storage', $env);
+        $this->assertStringContainsString('SESSION_DRIVER=file', $env);
+        $this->assertStringContainsString('CACHE_STORE=file', $env);
+        $this->assertStringContainsString('QUEUE_CONNECTION=sync', $env);
         $this->assertDirectoryExists($this->basePath.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'public');
         $this->assertDirectoryExists($this->basePath.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'cache');
     }

@@ -55,6 +55,12 @@ final class XamppAutoSetup
             $updates['FILESYSTEM_PUBLIC_URL'] = $storageUrl === '/storage' ? '/storage' : $storageUrl;
         }
 
+        if (self::truthy($env['XAMPP_AUTO_FILE_RUNTIME'] ?? true)) {
+            $updates['SESSION_DRIVER'] = 'file';
+            $updates['CACHE_STORE'] = 'file';
+            $updates['QUEUE_CONNECTION'] = 'sync';
+        }
+
         if ($updates !== []) {
             self::writeEnv($envPath, $updates);
             $env = array_merge($env, $updates);

@@ -162,6 +162,7 @@ Pada request pertama, aplikasi otomatis:
 - melayani `/storage/...` tanpa wajib membuat symlink `public/storage`.
 
 Default MySQL mengikuti XAMPP: host `127.0.0.1`, user `root`, password kosong. Jika credential berbeda, edit `.env` setelah extract lalu refresh halaman.
+Untuk first-run yang lebih aman, prebuild memakai `SESSION_DRIVER=file`, `CACHE_STORE=file`, dan `QUEUE_CONNECTION=sync`; data utama aplikasi tetap disimpan di MySQL.
 
 ### Alternatif: Setup lokal tanpa Release ZIP
 
