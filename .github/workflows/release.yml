@@ -44,7 +44,7 @@ jobs:
           mkdir -p release
           mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
           touch storage/app/public/.gitkeep storage/framework/cache/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep
-          zip -r release/$PACKAGE_NAME . -x ".git/*" ".github/*" "node_modules/*" "tests/*" "release/*" ".gitignore"
+          zip -r release/$PACKAGE_NAME . -x ".git/*" ".github/*" "node_modules/*" "tests/*" "release/*" ".gitignore" ".env*" ".phpactor.json" ".phpunit.result.cache" ".phpunit.cache" "Homestead.*" "*.log"
           ls -lh release
 
       - name: Upload release asset
