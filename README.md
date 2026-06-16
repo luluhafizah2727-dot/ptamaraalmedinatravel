@@ -134,29 +134,108 @@ Untuk smoke-check lokal, panggil endpoint publik yang relevan menggunakan host a
 
 ## Release ZIP untuk XAMPP
 
-Jika menggunakan release prebuild dari GitHub, file yang diunduh biasanya berupa ZIP berisi aplikasi siap pakai.
+Jika menggunakan release prebuild dari GitHub, file yang diunduh biasanya berupa ZIP berisi aplikasi siap pakai dengan:
+- **vendor/** - PHP dependencies (Composer packages)
+- **public/build/** - Frontend assets (CSS, JS yang sudah di-build oleh Vite)
+- **storage/** - Direktori untuk aplikasi (sudah ada struktur dan permissions)
 
-1. Extract file ZIP ke folder XAMPP, misalnya:
-   - `C:\xampp\htdocs\ptamaraalmedinatravel`
-2. Salin file `.env.example` menjadi `.env`.
-3. Sesuaikan konfigurasi database di `.env`:
-   - `DB_CONNECTION=mysql`
-   - `DB_HOST=127.0.0.1`
-   - `DB_PORT=3306`
-   - `DB_DATABASE=nama_database`
-   - `DB_USERNAME=root`
-   - `DB_PASSWORD=`
-4. Pastikan database sudah dibuat di phpMyAdmin / MySQL.
-5. Jalankan perintah dari folder aplikasi:
+### Instalasi dari Release ZIP
 
-```bash
-php artisan key:generate
-php artisan migrate --force
-php artisan storage:link
+1. **Download ZIP** dari [GitHub Releases](https://github.com/luluhafizah2727-dot/ptamaraalmedinatravel/releases)
+2. **Extract** ke folder XAMPP:
+   ```
+   C:\xampp\htdocs\ptamaraalmedinatravel
+   ```
+3. **Salin .env**:
+   ```bash
+   copy .env.example .env
+   ```
+4. **Konfigurasi database** di `.env`:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=ptamaraalmedinatravel
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+5. **Buat database** di phpMyAdmin atau MySQL command line:
+   ```sql
+   CREATE DATABASE ptamaraalmedinatravel;
+   ```
+6. **Jalankan setup** dari folder aplikasi:
+   ```bash
+   php artisan key:generate
+   php artisan migrate --force
+   php artisan storage:link
+   ```
+7. **Akses aplikasi**:
+   - Website: `http://localhost/ptamaraalmedinatravel`
+   - Admin: `http://localhost/ptamaraalmedinatravel/admin/login`
+
+### Alternatif: Setup lokal tanpa Release ZIP
+
+Jika ingin setup dari source code tanpa menunggu release:
+
+1. **Clone atau download** repository
+2. **Extract** ke `C:\xampp\htdocs\ptamaraalmedinatravel`
+3. **Install dependencies**:
+   ```bash
+   composer install
+   npm install
+   npm run build
+   ```
+4. **Salin dan konfigurasi .env**:
+   ```bash
+   copy .env.example .env
+   ```
+5. **Generate app key**:
+   ```bash
+   php artisan key:generate
+   ```
+6. **Buat database** dan jalankan migrations:
+   ```bash
+   php artisan migrate --force
+   php artisan storage:link
+   ```
+
+### XAMPP Konfigurasi Virtual Host (Opsional)
+
+Jika ingin menggunakan domain custom (misalnya `ptamara.local`) alih-alih path:
+
+**File: `C:\xampp\apache\conf\extra\httpd-vhosts.conf`**
+```apache
+<VirtualHost *:80>
+    DocumentRoot "C:\xampp\htdocs\ptamaraalmedinatravel\public"
+    ServerName ptamara.local
+    <Directory "C:\xampp\htdocs\ptamaraalmedinatravel\public">
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
 ```
 
-6. Akses aplikasi di browser melalui path XAMPP:
-   - `http://localhost/ptamaraalmedinatravel`
-   - `http://localhost/ptamaraalmedinatravel/admin/login`
+**File: `C:\Windows\System32\drivers\etc\hosts`**
+```
+127.0.0.1  ptamara.local
+```
+
+Kemudian akses via `http://ptamara.local` atau `http://ptamara.local/admin/login`.
+
+### Troubleshooting XAMPP
+
+**Issue: 404 atau "page not found"**
+- Pastikan `.htaccess` di folder `public/` ada
+- Pastikan Apache module `mod_rewrite` aktif di XAMPP
+- Pastikan application running dengan correct document root
+
+**Issue: Database connection error**
+- Pastikan MySQL service di XAMPP sudah running
+- Periksa username/password di `.env` (default: `root` dengan password kosong)
+- Pastikan database sudah dibuat
+
+**Issue: Storage/upload tidak bekerja**
+- Pastikan folder `storage/` dan `public/` writable
+- Jalankan `php artisan storage:link` ulang jika symlink tidak ada
 
 Jika release ZIP sudah berisi folder `public`, pastikan XAMPP DocumentRoot mengarah ke `C:\xampp\htdocs\ptamaraalmedinatravel\public` jika memakai virtual host. Jika tidak, gunakan URL yang sesuai dengan lokasi ekstrak.
