@@ -104,6 +104,11 @@ class PublicPageController extends Controller
             'profile' => CompanyProfile::query()->where('is_active', true)->first(),
             'contact' => Contact::query()->where('is_active', true)->first(),
             'settings' => SiteSetting::query()->pluck('value', 'key'),
+            'siteMedia' => [
+                'logo' => SiteSetting::mediaUrl(SiteSetting::BRAND_LOGO_KEY, 'images/site/logo.png'),
+                'favicon' => SiteSetting::mediaUrl(SiteSetting::FAVICON_KEY, 'images/site/logo.png'),
+                'hero' => SiteSetting::mediaUrl(SiteSetting::HERO_IMAGE_KEY, 'images/site/beranda-img.jpg'),
+            ],
         ];
     }
 }

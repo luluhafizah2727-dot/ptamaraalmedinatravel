@@ -2,9 +2,10 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\Login as AdminLogin;
 use App\Filament\Pages\Auth\EditProfile as AdminEditProfile;
+use App\Filament\Pages\Auth\Login as AdminLogin;
 use App\Filament\Pages\Dashboard;
+use App\Models\SiteSetting;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -32,16 +33,19 @@ class AdminPanelProvider extends PanelProvider
             ->login(AdminLogin::class)
             ->profile(page: AdminEditProfile::class, isSimple: false)
             ->brandName('PT Amara Al Medina Travel')
-            ->brandLogo(asset('images/site/logo.png'))
-            ->brandLogoHeight('4.75rem')
-            ->favicon(asset('images/site/logo.png'))
+            ->brandLogo(fn (): string => SiteSetting::mediaUrl(SiteSetting::BRAND_LOGO_KEY, 'images/site/logo.png'))
+            ->brandLogoHeight('4rem')
+            ->favicon(fn (): string => SiteSetting::mediaUrl(SiteSetting::FAVICON_KEY, 'images/site/logo.png'))
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->colors([
                 'primary' => Color::hex('#d61a6a'),
                 'success' => Color::hex('#0b8a4a'),
             ])
             ->userMenuItems([
-                'profile' => fn (Action $action): Action => $action->label('My Account'),
+                'profile' => fn (Action $action): Action => $action
+                    ->label('My Account')
+                    ->extraAttributes(['class' => 'admin-user-menu-hidden-default']),
+                'logout' => fn (Action $action): Action => $action->hidden(),
             ])
             ->renderHook(
                 PanelsRenderHook::USER_MENU_PROFILE_BEFORE,

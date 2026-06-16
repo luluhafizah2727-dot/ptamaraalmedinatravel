@@ -182,9 +182,9 @@ class DatabaseSeeder extends Seeder
         );
 
         $settings = [
-            'brand_logo_path' => 'images/site/logo.png',
-            'favicon_path' => 'images/site/logo.png',
-            'hero_image_path' => 'images/site/beranda-img.jpg',
+            'brand_logo_path' => 'site-settings/brand-logo.png',
+            'favicon_path' => 'site-settings/favicon.png',
+            'hero_image_path' => 'site-settings/hero-image.jpg',
             'hero_title_highlight' => 'Perjalanan Ibadah Umrah',
             'hero_title' => 'Nyaman, Aman & Terpercaya',
             'hero_subtitle' => 'PT. Amara Al Medina Travel siap menjadi mitra perjalanan ibadah terbaik Anda dengan pelayanan profesional dan amanah.',
@@ -208,6 +208,23 @@ class DatabaseSeeder extends Seeder
 
         foreach ($assets as $target => $source) {
             $sourcePath = public_path('images/seed/'.$source);
+            $targetPath = storage_path('app/public/'.$target);
+
+            if (! is_file($sourcePath) || is_file($targetPath)) {
+                continue;
+            }
+
+            File::ensureDirectoryExists(dirname($targetPath));
+            File::copy($sourcePath, $targetPath);
+        }
+
+        $siteAssets = [
+            'site-settings/brand-logo.png' => public_path('images/site/logo.png'),
+            'site-settings/favicon.png' => public_path('images/site/logo.png'),
+            'site-settings/hero-image.jpg' => public_path('images/site/beranda-img.jpg'),
+        ];
+
+        foreach ($siteAssets as $target => $sourcePath) {
             $targetPath = storage_path('app/public/'.$target);
 
             if (! is_file($sourcePath) || is_file($targetPath)) {

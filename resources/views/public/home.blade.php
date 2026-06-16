@@ -16,7 +16,7 @@
         </div>
         <div class="hero-visual">
             <img
-                src="{{ asset('images/site/beranda-img.jpg') }}"
+                src="{{ $siteMedia['hero'] ?? asset('images/site/beranda-img.jpg') }}"
                 alt="Ka'bah dan jamaah PT Amara Al Medina Travel"
                 width="1280"
                 height="720"

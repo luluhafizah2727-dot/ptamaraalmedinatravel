@@ -5,6 +5,7 @@ namespace App\Support;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 use PDO;
 use PDOException;
 use RuntimeException;
@@ -41,6 +42,20 @@ final class XamppAutoSetup
             return;
         }
 
+        self::ensureRequiredExtensions([
+            'dom',
+            'fileinfo',
+            'filter',
+            'iconv',
+            'intl',
+            'openssl',
+            'pdo_mysql',
+            'session',
+            'tokenizer',
+            'xmlreader',
+            'zip',
+        ]);
+
         $updates = [];
 
         if (self::blank($env['APP_KEY'] ?? null)) {
@@ -73,7 +88,7 @@ final class XamppAutoSetup
         }
     }
 
-    public static function ensureInstalled(Application $app): void
+    public static function ensureInstalled(Application $app, bool $force = false): void
     {
         if ($app->runningInConsole() || $app->environment('testing')) {
             return;
@@ -96,7 +111,9 @@ final class XamppAutoSetup
         $markerPath = $basePath.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'.xampp-installed.json';
         $signature = self::setupSignature($basePath);
 
-        if (self::markerMatches($markerPath, $signature)) {
+        $databaseReady = self::databaseHasRequiredTables();
+
+        if (! $force && self::markerMatches($markerPath, $signature) && $databaseReady) {
             return;
         }
 
@@ -112,8 +129,14 @@ final class XamppAutoSetup
                 throw new RuntimeException('Gagal mengunci proses auto-setup XAMPP.');
             }
 
-            if (self::markerMatches($markerPath, $signature)) {
+            $databaseReady = self::databaseHasRequiredTables();
+
+            if (! $force && self::markerMatches($markerPath, $signature) && $databaseReady) {
                 return;
+            }
+
+            if (! $shouldMigrate && ! $databaseReady) {
+                throw new RuntimeException('Database belum memiliki tabel aplikasi. Aktifkan XAMPP_AUTO_MIGRATE=true atau jalankan migrasi manual.');
             }
 
             if ($shouldMigrate) {
@@ -138,6 +161,42 @@ final class XamppAutoSetup
             flock($lockHandle, LOCK_UN);
             fclose($lockHandle);
         }
+    }
+
+    public static function databaseHasRequiredTables(): bool
+    {
+        try {
+            foreach (['migrations', 'users', 'site_settings'] as $table) {
+                if (! Schema::hasTable($table)) {
+                    return false;
+                }
+            }
+        } catch (Throwable) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function isMissingDatabaseObject(Throwable $exception): bool
+    {
+        do {
+            $message = $exception->getMessage();
+            $lowerMessage = strtolower($message);
+            $code = (string) $exception->getCode();
+
+            if (
+                str_contains($lowerMessage, 'base table or view not found')
+                || str_contains($lowerMessage, 'no such table')
+                || str_contains($lowerMessage, 'unknown database')
+                || str_contains($lowerMessage, "doesn't exist")
+                || $code === '42S02'
+            ) {
+                return true;
+            }
+        } while ($exception = $exception->getPrevious());
+
+        return false;
     }
 
     public static function renderSetupError(Throwable $exception): never
@@ -211,6 +270,25 @@ final class XamppAutoSetup
                 $exception,
             );
         }
+    }
+
+    /**
+     * @param  list<string>  $extensions
+     */
+    private static function ensureRequiredExtensions(array $extensions): void
+    {
+        $missing = array_values(array_filter(
+            $extensions,
+            fn (string $extension): bool => ! extension_loaded($extension),
+        ));
+
+        if ($missing === []) {
+            return;
+        }
+
+        throw new RuntimeException(
+            'Ekstensi PHP XAMPP belum aktif: '.implode(', ', $missing).'. Aktifkan extension tersebut di php.ini XAMPP, lalu restart Apache.',
+        );
     }
 
     private static function assertMysqlIdentifier(string $value, string $name): void
@@ -443,7 +521,7 @@ final class XamppAutoSetup
         <li>Apache dan MySQL di XAMPP sudah running.</li>
         <li>Credential database di file <code>.env</code> benar.</li>
         <li>Folder aplikasi, <code>storage</code>, dan <code>bootstrap/cache</code> bisa ditulis.</li>
-        <li>Ekstensi PHP <code>pdo_mysql</code>, <code>openssl</code>, dan <code>fileinfo</code> aktif.</li>
+        <li>Ekstensi PHP <code>pdo_mysql</code>, <code>openssl</code>, <code>fileinfo</code>, <code>intl</code>, dan <code>zip</code> aktif.</li>
     </ol>
 </main>
 </body>

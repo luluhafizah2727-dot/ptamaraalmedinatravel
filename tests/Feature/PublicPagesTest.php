@@ -24,9 +24,10 @@ class PublicPagesTest extends TestCase
             ->assertOk()
             ->assertSee('Perjalanan Ibadah Umrah')
             ->assertSee('Lihat Jadwal')
-            ->assertSee('images/site/logo.png')
+            ->assertSee('storage/site-settings/brand-logo.png')
+            ->assertSee('storage/site-settings/favicon.png')
             ->assertDontSee('images/site/logo-nobg.png')
-            ->assertSee('images/site/beranda-img.jpg');
+            ->assertSee('storage/site-settings/hero-image.jpg');
         $this->get('/profil')
             ->assertOk()
             ->assertSee('Profil Perusahaan')

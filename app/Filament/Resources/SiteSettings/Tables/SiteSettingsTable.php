@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\SiteSettings\Tables;
 
-use Filament\Actions\DeleteAction;
+use App\Models\SiteSetting;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -13,8 +13,16 @@ class SiteSettingsTable
     {
         return $table
             ->columns([
-                TextColumn::make('key')->label('Key')->searchable()->sortable(),
-                TextColumn::make('value')->label('Value')->limit(80),
+                TextColumn::make('key')
+                    ->label('Bagian')
+                    ->formatStateUsing(fn (?string $state): string => SiteSetting::labelFor($state))
+                    ->description(fn (SiteSetting $record): string => $record->key)
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('value')
+                    ->label('Isi Saat Ini')
+                    ->formatStateUsing(fn (?string $state, SiteSetting $record): string => SiteSetting::isImageKey($record->key) ? basename((string) $state) : (string) $state)
+                    ->limit(80),
             ])
             ->defaultSort('key')
             ->paginated(false)
@@ -26,10 +34,6 @@ class SiteSettingsTable
                     ->label('Edit')
                     ->icon('heroicon-o-pencil-square')
                     ->color('warning'),
-                DeleteAction::make()
-                    ->label('Hapus')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger'),
             ]);
     }
 }

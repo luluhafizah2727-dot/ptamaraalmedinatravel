@@ -1,6 +1,6 @@
 @php
-    $logoUrl = asset('images/site/logo.png');
-    $faviconUrl = asset('images/site/logo.png');
+    $logoUrl = $siteMedia['logo'] ?? asset('images/site/logo.png');
+    $faviconUrl = $siteMedia['favicon'] ?? asset('images/site/logo.png');
     $whatsappRaw = $contact?->whatsapp ?? $settings->get('cta_whatsapp', '');
     $whatsapp = preg_replace('/\D+/', '', $whatsappRaw);
     $whatsapp = str_starts_with($whatsapp, '0') ? '62' . substr($whatsapp, 1) : $whatsapp;

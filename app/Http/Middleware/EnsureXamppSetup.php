@@ -21,6 +21,20 @@ class EnsureXamppSetup
             return XamppAutoSetup::setupErrorResponse($exception);
         }
 
-        return $next($request);
+        try {
+            return $next($request);
+        } catch (Throwable $exception) {
+            if (! XamppAutoSetup::isMissingDatabaseObject($exception)) {
+                throw $exception;
+            }
+
+            try {
+                XamppAutoSetup::ensureInstalled(app(), force: true);
+
+                return $next($request);
+            } catch (Throwable $repairException) {
+                return XamppAutoSetup::setupErrorResponse($repairException);
+            }
+        }
     }
 }

@@ -29,7 +29,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: bcmath, ctype, curl, dom, fileinfo, filter, iconv, mbstring, openssl, pdo_mysql, session, tokenizer, xml, xmlreader, zip
+          extensions: bcmath, ctype, curl, dom, fileinfo, filter, iconv, intl, mbstring, openssl, pdo_mysql, session, tokenizer, xml, xmlreader, zip
           coverage: none
           tools: composer:v2
 

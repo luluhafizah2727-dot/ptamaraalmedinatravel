@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\SiteSettings;
 
-use App\Filament\Resources\SiteSettings\Pages\CreateSiteSetting;
 use App\Filament\Resources\SiteSettings\Pages\EditSiteSetting;
 use App\Filament\Resources\SiteSettings\Pages\ListSiteSettings;
 use App\Filament\Resources\SiteSettings\Schemas\SiteSettingForm;
@@ -19,9 +18,9 @@ class SiteSettingResource extends Resource
     protected static ?string $model = SiteSetting::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
-    protected static ?string $navigationLabel = 'Pengaturan';
-    protected static ?string $modelLabel = 'Pengaturan';
-    protected static ?string $pluralModelLabel = 'Pengaturan';
+    protected static ?string $navigationLabel = 'Pengaturan Website';
+    protected static ?string $modelLabel = 'Pengaturan Website';
+    protected static ?string $pluralModelLabel = 'Pengaturan Website';
     protected static ?int $navigationSort = 7;
 
     public static function form(Schema $schema): Schema
@@ -45,7 +44,6 @@ class SiteSettingResource extends Resource
     {
         return [
             'index' => ListSiteSettings::route('/'),
-            'create' => CreateSiteSetting::route('/create'),
             'edit' => EditSiteSetting::route('/{record}/edit'),
         ];
     }

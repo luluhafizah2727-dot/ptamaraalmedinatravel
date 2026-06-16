@@ -11,6 +11,8 @@ use App\Models\UmrahPackage;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminAccessTest extends TestCase
@@ -44,7 +46,9 @@ class AdminAccessTest extends TestCase
             ->get('/admin')
             ->assertOk()
             ->assertSee('Dashboard')
-            ->assertSee('Grafik Pengunjung');
+            ->assertSee('Grafik Pengunjung')
+            ->assertSee('My Account')
+            ->assertSee('Keluar');
     }
 
     public function test_admin_can_open_profile_page(): void
@@ -102,7 +106,6 @@ class AdminAccessTest extends TestCase
             '/admin/contacts/create',
             "/admin/contacts/{$contact->getRouteKey()}/edit",
             '/admin/site-settings',
-            '/admin/site-settings/create',
             "/admin/site-settings/{$siteSetting->getRouteKey()}/edit",
         ];
 
@@ -124,5 +127,44 @@ class AdminAccessTest extends TestCase
         ]);
 
         $this->assertStringContainsString('/storage/avatars/admin.jpg', $admin->getFilamentAvatarUrl());
+    }
+
+    public function test_site_setting_image_form_explains_replacement_upload(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $admin = User::query()->create([
+            'name' => 'Admin Settings',
+            'email' => 'admin-settings@example.test',
+            'password' => 'password',
+            'is_admin' => true,
+        ]);
+        $setting = SiteSetting::query()->where('key', SiteSetting::BRAND_LOGO_KEY)->firstOrFail();
+
+        $this->actingAs($admin)
+            ->get("/admin/site-settings/{$setting->getRouteKey()}/edit")
+            ->assertOk()
+            ->assertSee('Logo Website')
+            ->assertSee('Upload baru akan mengganti gambar lama')
+            ->assertSee('Rasio crop: 1:1')
+            ->assertDontSee('Tambah Pengaturan');
+    }
+
+    public function test_site_setting_image_upload_uses_single_replacement_path(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('site-settings/brand-logo.jpg', 'old jpg');
+        Storage::disk('public')->put('site-settings/brand-logo.webp', 'old webp');
+
+        $path = SiteSetting::storeReplacementImage(
+            SiteSetting::BRAND_LOGO_KEY,
+            UploadedFile::fake()->create('logo.png', 10, 'image/png'),
+            'site-settings/brand-logo.jpg',
+        );
+
+        $this->assertSame('site-settings/brand-logo.png', $path);
+        Storage::disk('public')->assertExists('site-settings/brand-logo.png');
+        Storage::disk('public')->assertMissing('site-settings/brand-logo.jpg');
+        Storage::disk('public')->assertMissing('site-settings/brand-logo.webp');
     }
 }
